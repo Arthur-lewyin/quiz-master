@@ -51,6 +51,27 @@ def draw():
     screen.draw.textbox(marquee_message,marquee_box,color="white")
     screen.draw.textbox("skip",skip_box,color="black", angle=-90)
     screen.draw.textbox(str(time_left),timer_box,color="black")
+    screen.draw.textbox(question[0].strip(), question_box,color ="black")
+    
+    index = 1
+    for answer_box in answer_boxes:
+        screen.draw.textbox(question[index].strip(), answer_box, color ="black")
+        index=index + 1
+    
+def read_question_file():
+    global question_count, questions
+    q_file=open(question_file_name, "r")
+    for question in q_file:
+        questions.append(question)
+        question_count += 1
+    q_file.close()
+
+def read_next_question():
+    global question_index
+    question_index = question_index + 1
+    return questions.pop(0).split("|")
+
+
 
 def move_marquee():
     marquee_box.x= marquee_box.x-2
@@ -60,5 +81,53 @@ def move_marquee():
 def update():
     move_marquee()
 
+def on_mouse_down(pos):
+    index = 1
+    for box in answer_boxes:
+        if box.collidepoint(pos):
+            if index is int(question[5]):
+                correct_answer()
+            else:
+                game_over()
+        index = index + 1
+    if skip_box.collidepoint(pos):
+        skip_question()
 
+def correct_answer():
+    global score, question, time_left, questions
+    score = score + 1 
+    if questions:
+        question = read_next_question()
+        time_left = 10 
+    else:
+        game_over()
+
+def game_over():
+    global question,time_left,is_game_over
+    message = f"game over!\n you got {score} questions correct!"
+    question = [message, "-","-","-","-", 5]
+    time_left = 0
+    is_game_over = True
+
+def skip_question():
+    global question,time_left
+    if questions and not is_game_over:
+        question = read_next_question()
+        time_left = 10
+    else: 
+        game_over()
+
+def update_time():
+    global time_left
+    if time_left:
+        time_left = time_left - 1 
+    else:
+        game_over()
+
+clock.schedule_interval(update_time,1)
+
+
+question=["Question....","ans1","ans2","ans3","ans4","1"]
+read_question_file()
+question = read_next_question()
 pgzrun.go()
